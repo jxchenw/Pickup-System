@@ -17,7 +17,7 @@ import {
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux'
 
-import { fetchOrders } from '../actions/merchant_action'
+import { fetchOrders, updateOrder } from '../actions/merchant_action'
 import AsyncStorage from '@react-native-community/async-storage';
 import { SafeAreaView } from 'react-navigation';
 import Icon from 'react-native-vector-icons/FontAwesome5';
@@ -30,7 +30,6 @@ class HomeScreen extends Component {
             refreshing: false,
             orders: [],
             orientation: this.isPortrait() ? 'portrait' : 'landscape',
-            timeStamp: (new Date()).getTime()
         }
 
         if (Platform.OS === 'android') {
@@ -55,63 +54,28 @@ class HomeScreen extends Component {
             this.props.navigation.navigate('Auth')
         }
 
-        console.log(this.props.initOrders)
-
-        let tempOrders = [
-            {
-                status: 'Pending',
-                data: []
-            }, {
-                status: 'Processing',
-                data: []
-            }, {
-                status: 'Complete',
-                data: []
-            }]
-        if (this.props.initOrders.length) {
-            for (let order of this.props.initOrders) {
-                order.order_status == 'Pending' ?
-                    tempOrders[0].data.push(order) :
-                    order.order_status == 'Processing' ?
-                        tempOrders[1].data.push(order) :
-                        order.order_status == 'Complete' ?
-                            tempOrders[2].data.push(order) : ''
-            }
-        }
-
-        this.setState({
-            orders: tempOrders
-        })
-
-
         this.interval = setInterval(() => {
             this.countDown()
         }, 1000);
     }
 
     countDown() {
-        var now = this.state.timeStamp,
-            updateOrders = this.state.orders,
-            timer
+        var updateOrders = this.props.orders,
+            timer = 0
 
-        for (var status of updateOrders) {
-            for (var order of status.data) {
-                timer = Number(order.pickup_time) - Number(now)
-                order.timer = timer > 0 ? timer : 0
+        if (updateOrders) {
+            for (var status of updateOrders) {
+                for (var order of status.data) {
+                    timer = Number((new Date(order.pickup_time.replace(' ', 'T'))).getTime()) - Number((new Date()).getTime())
+                    order.timer = timer > 0 ? timer : 0
+                }
             }
         }
 
         this.setState({
-            timeStamp: (new Date()).getTime(),
             orders: updateOrders
         });
     }
-
-    // componentDidUpdate() {
-    //     if (this.state.timer === 1) {
-    //         clearInterval(this.interval);
-    //     }
-    // }
 
     componentWillUnmount() {
         clearInterval(this.interval);
@@ -125,13 +89,6 @@ class HomeScreen extends Component {
         return dim.height >= dim.width;
     };
 
-
-    filterOrderStatus = (index) => {
-        this.setState({
-            selectedIndex: index
-        })
-    }
-
     _logoffAsync = async () => {
         try {
             await AsyncStorage.removeItem('userinfo')
@@ -141,20 +98,15 @@ class HomeScreen extends Component {
         this.props.navigation.navigate('AuthLoading')
     }
 
-    changeLayout = (order, index, status) => {
+    changeLayout = async (order_id, status) => {
         // LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
         // this.setState({
         //     expandedIndex: order_id == this.state.expandedIndex ? 0 : order_id
         // })
 
-        let orders = this.state.orders
+        status === 'Pending' ? await this.props.updateOrder(order_id, 'Processing') : await this.props.updateOrder(order_id, 'Complete');
 
-        if (status === 'Pending') {
-            orders[0].data.splice(index, 1)
-            orders[1].data.push(order)
-        } else if (status === 'Processing') {
-            orders[1].data.splice(index, 1)
-        }
+        this.props.fetchOrders()
     }
 
     updateStatus = (area_key, order_key) => {
@@ -165,13 +117,9 @@ class HomeScreen extends Component {
         })
     }
 
-    fetchData = () => {
-
-    }
-
     refreshOrders = () => {
         this.setState({ refreshing: true });
-        fetchData().then(() => {
+        this.props.fetchOrders().then(() => {
             this.setState({ refreshing: false });
         });
     }
@@ -187,16 +135,16 @@ class HomeScreen extends Component {
                 <View style={styles.flexOneStyle} >
                     <SafeAreaView style={styles.flexOneStyle}>
                         <ScrollView style={styles.profileLandStyle}
-                        // refreshControl={
-                        //     <RefreshControl
-                        //         refreshing={this.state.refreshing}
-                        //         onRefresh={this.refreshOrders}
-                        //     />
-                        // }
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={this.state.refreshing}
+                                onRefresh={this.refreshOrders}
+                            />
+                        }
                         >
 
                             <View>
-                                <Text style={styles.profileTitle}>Sunny Delivery System {this.props.initOrders.length}</Text>
+                                <Text style={styles.profileTitle}>Sunny Delivery System</Text>
                                 <Icon style={styles.iconStyle} name="sign-out-alt" size={30} color="#000000" onPress={this._logoffAsync} />
                             </View>
                             {
@@ -233,10 +181,10 @@ class HomeScreen extends Component {
                                                             paddingBottom: 7,
                                                         }}>
 
-                                                        <TouchableOpacity activeOpacity={0.8} onPress={(order_id) => this.changeLayout(item, index, order.status)}>
+                                                        <TouchableOpacity activeOpacity={0.8} onPress={(order_id) => this.changeLayout(item.order_uuid, order.status)}>
                                                             <View style={styles.itemTitleStyle}>
                                                                 <View style={styles.itemSubTitleStyle}>
-                                                                    <Text style={styles.itemOrderIdStyle}>ORD#: {item.order_id}</Text>
+                                                                    <Text style={styles.itemOrderIdStyle}>ORD#: {item.order_uuid}</Text>
                                                                     <Text style={styles.itemOrderIdStyle}>| {Math.floor(item.timer / 3600000) < 10 ? '0' + Math.floor(item.timer / 3600000) : Math.floor(item.timer / 3600000)}:
                                                                     {Math.floor(item.timer % 3600000 / 60000) < 10 ? '0' + Math.floor(item.timer % 3600000 / 60000) : Math.floor(item.timer % 3600000 / 60000)}:
                                                                     {Math.floor(item.timer % 3600000 % 60000 / 1000) < 10 ? '0' + Math.floor(item.timer % 3600000 % 60000 / 1000) : Math.floor(item.timer % 3600000 % 60000 / 1000)}</Text>
@@ -479,12 +427,13 @@ var styles = StyleSheet.create({
 
 const mapStateToProps = state => {
     return {
-        initOrders: state.orders
+        orders: state.orders,
+        user_token: state.user_token
     }
 };
 
-// const mapDispatchToProps = dispatch => {
-//     return bindActionCreators({ getOrders: fetchOrders }, dispatch)
-// }
+const mapDispatchToProps = dispatch => {
+    return bindActionCreators({ fetchOrders, updateOrder }, dispatch)
+}
 
-export default connect(mapStateToProps, null)(HomeScreen)
+export default connect(mapStateToProps, mapDispatchToProps)(HomeScreen)

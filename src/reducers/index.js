@@ -4,5 +4,5 @@ import user_reducer from './user_reducer';
 
 export default combineReducers({
     orders: merchant_reducer,
-    user: user_reducer
+    user: user_reducer,
 })

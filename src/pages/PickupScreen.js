@@ -1,8 +1,11 @@
 import React, { Component } from 'react';
 import { View, StyleSheet, Text, TextInput, TouchableOpacity, Image, FlatList, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-navigation';
+import { bindActionCreators } from 'redux';
+import { connect } from 'react-redux'
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import Toast from 'react-native-root-toast';
+import { fetchOrders, updateOrder } from '../actions/merchant_action'
 
 class PickupScreen extends Component {
 
@@ -13,142 +16,7 @@ class PickupScreen extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            order_id: null,
-            orders: [{
-                order_id: '12',
-                order_products: [
-                    {
-                        name: 'fish',
-                        quantity: 12,
-                    },
-                    {
-                        name: 'vegetables',
-                        quantity: 3,
-                    },
-                    {
-                        name: 'others',
-                        quantity: 1,
-                    }
-                ],
-                order_time: '2019-06-30 12:00:00',
-                pickup_time: '2019-06-31 11:12:12',
-                order_status: 'Processing',
-                comments: 'hello'
-            }, {
-                order_id: '13',
-                order_products: [
-                    {
-                        name: 'meat',
-                        quantity: 5,
-                    },
-                    {
-                        name: 'meat2',
-                        quantity: 31,
-                    }
-                ],
-                order_time: '2019-06-30 14:00:00',
-                pickup_time: '2019-06-31 9:12:12',
-                order_status: 'Shipping',
-                comments: 'hello2'
-            }, {
-                order_id: '15',
-                order_products: [
-                    {
-                        name: 'fish',
-                        quantity: 12,
-                    },
-                    {
-                        name: 'vegetables',
-                        quantity: 3,
-                    },
-                    {
-                        name: 'others',
-                        quantity: 1,
-                    }
-                ],
-                comments: 'testing',
-                order_time: '2019-06-30 12:00:00',
-                pickup_time: '2019-06-31 11:12:12',
-                order_status: 'Processing'
-            }, {
-                order_id: '18',
-                order_products: [
-                    {
-                        name: 'meat',
-                        quantity: 5,
-                    },
-                    {
-                        name: 'meat2',
-                        quantity: 31,
-                    }
-                ],
-                comments: '',
-                order_time: '2019-06-30 14:00:00',
-                pickup_time: '2019-06-31 9:12:12',
-                order_status: 'Complete'
-            }, {
-                order_id: '133',
-                order_products: [
-                    {
-                        name: 'test',
-                        quantity: 5,
-                    }
-                ],
-                comments: '',
-                order_time: '2019-06-30 14:00:00',
-                pickup_time: '2019-06-31 9:12:12',
-                order_status: 'Shipping'
-            }, {
-                order_id: '100',
-                order_products: [
-                    {
-                        name: 'fish',
-                        quantity: 12,
-                    },
-                    {
-                        name: 'vegetables',
-                        quantity: 3,
-                    },
-                    {
-                        name: 'others',
-                        quantity: 1,
-                    }
-                ],
-                comments: '',
-                order_time: '2019-06-30 12:00:00',
-                pickup_time: '2019-06-31 11:12:12',
-                order_status: 'Processing'
-            }],
-            complete_orders: [
-                {
-                    order_id: '100',
-                    complete_time: '2019-06-31 13:12:12',
-                }, {
-                    order_id: '120',
-                    complete_time: '2019-06-31 15:12:12',
-                }, {
-                    order_id: '140',
-                    complete_time: '2019-06-31 15:12:12',
-                }, {
-                    order_id: '150',
-                    complete_time: '2019-06-31 15:12:12',
-                }, {
-                    order_id: '160',
-                    complete_time: '2019-06-31 15:12:12',
-                }, {
-                    order_id: '170',
-                    complete_time: '2019-06-31 15:12:12',
-                }, {
-                    order_id: '180',
-                    complete_time: '2019-06-31 15:12:12',
-                }, {
-                    order_id: '121',
-                    complete_time: '2019-06-31 15:12:12',
-                }, {
-                    order_id: '331',
-                    complete_time: '2019-06-31 15:12:12',
-                }
-            ],
+            order_uuid: null,
             currentPosition: 0,
         }
         this.scrolling = this.scrolling.bind(this)
@@ -157,25 +25,28 @@ class PickupScreen extends Component {
 
     updateOrderId = (val) => {
         this.setState({
-            order_id: val
+            order_uuid: val
         })
     }
 
     componentDidMount() {
-        this.activeInterval = setInterval(this.scrolling, 2000);
+        console.log(this.props.orders[0].data)
+        // this.activeInterval = setInterval(this.scrolling, 2000);
     }
 
-    componentWillUnmount() {
-        clearInterval(this.activeInterval);
-    }
+    // componentWillUnmount() {
+    //     clearInterval(this.activeInterval);
+    // }
 
     pickupOrder = () => {
-        let in_list = this.state.orders.some(el => el.order_id == this.state.order_id)
+        let in_list = this.props.orders[1].data.some(el => el.order_uuid == this.state.order_uuid)
 
         if (!in_list) {
-            this.state.orders.push({ order_id: this.state.order_id, order_products: [] })
-            this.showToast(true, 'Please come to pick up your order')
-            this.state.order_id = null
+            this.props.updateOrder(this.state.order_uuid, this.props.orders[1].status)
+                .then(async (res) => {
+                    this.showToast(true, 'Please come to pick up your order')
+                    await this.props.fetchOrders()
+                })
         } else
             this.showToast(false, 'Your order is already in the list!')
     }
@@ -230,7 +101,7 @@ class PickupScreen extends Component {
         return (
             <View style={styles.pageStyle} >
                 <Image
-                    source={require('../static/img/2.jpg')}
+                    source={require('../static/img/3.jpg')}
                     style={styles.backgroundStyle}
                 />
                 <SafeAreaView style={styles.pageContentStyle}>
@@ -242,11 +113,11 @@ class PickupScreen extends Component {
                             showsVerticalScrollIndicator={false}
                             showsHorizontalScrollIndicator={false}
                             style={styles.waitingListStyle}
-                            extraData={this.state}
-                            data={this.state.orders}
+                            extraData={this.props.orders}
+                            data={this.props.orders[1].data}
                             renderItem={({ item, index }) =>
                                 // <View style={styles.waitingItemStyle}>
-                                <Text key={index} style={styles.waitingNumberStyle}>{item.order_id}</Text>
+                                <Text key={index} style={styles.waitingNumberStyle}>{item.order_uuid}</Text>
                                 // </View>
                             }
                             keyExtractor={(item, index) => index.toString()}
@@ -259,7 +130,7 @@ class PickupScreen extends Component {
                                 autoCompleteType={'off'}
                                 style={styles.textInputStyle}
                                 onChangeText={(text) => this.updateOrderId(text)}
-                                value={this.state.order_id}
+                                value={this.state.order_uuid}
                                 placeholder={'Please enter your order id'}
                             />
                         </View>
@@ -270,7 +141,7 @@ class PickupScreen extends Component {
                             <Text style={styles.buttonTextStyle}>Pick Up</Text>
                         </TouchableOpacity>
                     </View>
-                    <View style={styles.completeAreaStyle}>
+                    {/* <View style={styles.completeAreaStyle}>
                         <Text style={styles.titleStyle}>Complete List</Text>
                         <ScrollView
                             style={styles.completegListStyle}
@@ -282,7 +153,7 @@ class PickupScreen extends Component {
                                 <Text key={index} style={styles.completeRowStyle}>Order {item.order_id} has been picked up!</Text>
                             ))}
                         </ScrollView>
-                    </View>
+                    </View> */}
                 </SafeAreaView>
             </View>
         )
@@ -295,7 +166,7 @@ const styles = StyleSheet.create({
         alignItems: 'center'
     },
     backgroundStyle: {
-        resizeMode: 'contain',
+        resizeMode: 'cover',
         flex: 1
     },
     pageContentStyle: {
@@ -321,23 +192,23 @@ const styles = StyleSheet.create({
     waitingAreaStyle: {
         flex: 1,
         width: '80%',
-        alignSelf: 'flex-start',
+        alignSelf: 'center',
         // justifyContent: 'center',
         margin: 20,
     },
     waitingListStyle: {
-        display: 'flex',
-        flexWrap: 'wrap',
-        flexGrow: 0,
-        paddingHorizontal: 10,
-        marginTop: 10,
+        // display: 'flex',
+        // flexWrap: 'wrap',
+        // flexGrow: 0,
+        // paddingHorizontal: 10,
+        // marginTop: 10,
     },
     waitingItemStyle: {
+        flex: 1,
         // alignSelf: 'stretch',
-        // justifyContent: 'flex-start'
+        justifyContent: 'space-around'
     },
     waitingNumberStyle: {
-        flex: 0.25,
         fontSize: 20,
         fontWeight: 'bold',
     },
@@ -350,7 +221,7 @@ const styles = StyleSheet.create({
         margin: 10,
     },
     textInputContainerStyle: {
-        flex: 1,
+        // flex: 1,
         height: 40,
         width: 300,
         margin: 10,
@@ -369,7 +240,7 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingTop: 10,
         paddingRight: 10,
-        paddingBottom: 10,
+        // paddingBottom: 10,
         paddingLeft: 0,
         // backgroundColor: '#fff',
         color: '#424242',
@@ -410,4 +281,14 @@ const styles = StyleSheet.create({
     }
 })
 
-export default PickupScreen
+const mapStateToProps = state => {
+    return {
+        orders: state.orders
+    }
+};
+
+const mapDispatchToProps = dispatch => {
+    return bindActionCreators({ fetchOrders, updateOrder }, dispatch)
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(PickupScreen)

@@ -127,10 +127,7 @@ class LoginScreen extends Component {
                 <View style={styles.pageStyle}>
                     <Image
                         source={require('../static/img/1.jpeg')}
-                        style={{
-                            resizeMode: 'cover',
-                            flex: 1
-                        }}
+                        style={styles.backgroundStyle}
                     />
                     <SafeAreaView style={styles.pageContentStyle}>
                         <View style={styles.profile}>
@@ -179,10 +176,7 @@ class LoginScreen extends Component {
                 <View style={styles.pageStyle}>
                     <Image
                         source={require('../static/img/1L.jpg')}
-                        style={{
-                            resizeMode: 'cover',
-                            flex: 1
-                        }}
+                        style={styles.backgroundStyle}
                     />
                     <SafeAreaView style={styles.pageContentStyle}>
                         <View style={styles.profile}>
@@ -237,7 +231,12 @@ class LoginScreen extends Component {
 var styles = StyleSheet.create({
     pageStyle: {
         flex: 1,
-        alignItems: 'center'
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    backgroundStyle: {
+        resizeMode: 'cover',
+        flex: 1
     },
     pageContentStyle: {
         position: 'absolute',

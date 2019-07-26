@@ -44,7 +44,7 @@ const appNavigator = createSwitchNavigator(
 const Navigator = createAppContainer(appNavigator)
 
 const client = axios.create({ //all axios can be used, shown in axios documentation
-	baseURL: 'http://dummy.restapiexample.com/api/v1',
+	baseURL: 'http://www.sunnysupermarket.com/sunny/admin/index.php?route=delivery',
 	responseType: 'json',
 	validateStatus: function (status) {
 		return status >= 200 && status < 300
