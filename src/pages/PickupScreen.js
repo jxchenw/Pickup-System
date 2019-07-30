@@ -1,5 +1,8 @@
 import React, { Component } from 'react';
-import { View, StyleSheet, Text, TextInput, TouchableOpacity, Image, FlatList, ScrollView } from 'react-native';
+import {
+    View, StyleSheet,
+    RefreshControl, Text, TextInput, TouchableOpacity, Image, FlatList, ScrollView
+} from 'react-native';
 import { SafeAreaView } from 'react-navigation';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux'
@@ -16,6 +19,7 @@ class PickupScreen extends Component {
     constructor(props) {
         super(props);
         this.state = {
+            refreshing: false,
             order_uuid: null,
             currentPosition: 0,
         }
@@ -41,7 +45,7 @@ class PickupScreen extends Component {
     pickupOrder = () => {
         let in_list = this.props.orders[1].data.some(el => el.order_uuid == this.state.order_uuid)
 
-        if (!in_list) {
+        if (this.props.orders.length && !in_list) {
             this.props.updateOrder(this.state.order_uuid, this.props.orders[1].status)
                 .then(async (res) => {
                     this.showToast(true, 'Please come to pick up your order')
@@ -97,6 +101,13 @@ class PickupScreen extends Component {
         }
     }
 
+    refreshOrders = () => {
+        this.setState({ refreshing: true });
+        this.props.fetchOrders().then(() => {
+            this.setState({ refreshing: false });
+        });
+    }
+
     render() {
         return (
             <View style={styles.pageStyle} >
@@ -121,6 +132,12 @@ class PickupScreen extends Component {
                                 // </View>
                             }
                             keyExtractor={(item, index) => index.toString()}
+                            refreshControl={
+                                <RefreshControl
+                                    refreshing={this.state.refreshing}
+                                    onRefresh={this.refreshOrders}
+                                />
+                            }
                         />
                     </View>
                     <View style={styles.inputAreaStyle}>

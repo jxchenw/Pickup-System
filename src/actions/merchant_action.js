@@ -1,4 +1,5 @@
 import axios from 'axios'
+import AsyncStorage from '@react-native-community/async-storage';
 import * as MERCHANT from '../constants/index'
 
 export const fetchOrdersBegin = () => ({
@@ -55,9 +56,6 @@ export const updateOrder = (order_uuid, order_status) => {
             }
         })
             .then(response => {
-                console.log(order_uuid)
-                console.log(order_status)
-                console.log(response)
                 dispatch(updateOrdersSuccess(response.data));
                 return response.data
             })

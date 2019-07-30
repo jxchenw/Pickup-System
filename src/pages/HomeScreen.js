@@ -148,6 +148,7 @@ class HomeScreen extends Component {
                                 <Icon style={styles.iconStyle} name="sign-out-alt" size={30} color="#000000" onPress={this._logoffAsync} />
                             </View>
                             {
+                                !this.state.orders || !this.state.orders.length ? <View></View> :
                                 this.state.orders.map((order, key) => (
 
                                     <View key={key} style={styles.flexOneStyle}>
